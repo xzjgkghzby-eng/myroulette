@@ -1,149 +1,187 @@
-const BIN_ID = "69ba8242aa77b81da9f61d90";
-const API_KEY = "$2a$10$4i14QEY44PwUIvj7C/oI6uAGx6IQpWoihAcpGKxP8IVWqgON0xVEy";
-const BASE_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+const BIN_URL = "https://api.jsonbin.io/v3/b/69ba8242aa77b81da9f61d90/latest";
+const MASTER_KEY = "$2a$10$4i14QEY44PwUIvj7C/oI6uAGx6IQpWoihAcpGKxP8IVWqgON0xVEy";
 
-let data = { decks: {} };
-let history = JSON.parse(localStorage.getItem("rouletteHistory") || "[]");
+let templates = [];
+let currentTemplate = null;
+let currentResults = {};
+let rerollCount = 0;
+let history = JSON.parse(localStorage.getItem("rouletteHistory")) || [];
 
-// Charger les données depuis JSONBin
-async function loadData() {
-  const res = await fetch(BASE_URL + "/latest", {
-    headers: { "X-Master-Key": API_KEY }
-  });
-  const json = await res.json();
-  data = json.record;
-  populateDecks();
+// Fallback en français (tu peux le supprimer une fois ton BIN rempli)
+const fallbackTemplates = [
+    {
+        id: "demo1",
+        name: "Jeu Sensuel Classique",
+        image: "https://picsum.photos/id/1015/800/400",
+        columns: {
+            "A": { label: "Position", values: {"0":"Missionnaire lent et profond","1":"Cuillère sensuelle","2":"Chevaucheuse","3":"Debout contre le mur","4":"69 inversé","5":"Lotus face à face","6":"Chien classique","7":"Équerre","8":"Sur le côté","9":"Sur les genoux"} },
+            "B": { label: "Durée", values: {"0":"30 secondes","1":"1 minute","2":"2 minutes","3":"3 minutes","4":"4 minutes","5":"5 minutes","6":"7 minutes","7":"10 minutes","8":"15 minutes","9":"Jusqu'à l'orgasme"} },
+            "C": { label: "Action bonus", values: {"0":"Mains attachées","1":"Yeux bandés","2":"Avec glace","3":"Avec huile","4":"Baisers partout","5":"Lécher lentement","6":"Mordiller","7":"Fessées légères","8":"Parler sale","9":"Arrêt total au signal"} }
+        }
+    }
+];
+
+async function loadTemplates() {
+    try {
+        const res = await fetch(BIN_URL, {
+            headers: { "X-Master-Key": MASTER_KEY }
+        });
+        const json = await res.json();
+        const data = json.record || [];
+        templates = Array.isArray(data) ? data : (data.templates || []);
+    } catch (e) {
+        console.warn("JSONBin inaccessible → fallback activé");
+        templates = fallbackTemplates;
+    }
+    if (templates.length === 0) templates = fallbackTemplates;
+    renderTemplates();
 }
 
-// Remplir le sélecteur de decks
-function populateDecks() {
-  const sel = document.getElementById("deckSelect");
-  sel.innerHTML = "";
-  Object.keys(data.decks).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    sel.appendChild(opt);
-  });
+function renderTemplates() {
+    const grid = document.getElementById("templates-grid");
+    grid.innerHTML = "";
+    templates.forEach(tpl => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+            <img src="${tpl.image}" alt="${tpl.name}">
+            <h3>${tpl.name}</h3>
+        `;
+        card.onclick = () => startGame(tpl);
+        grid.appendChild(card);
+    });
 }
 
-// Lancer la roulette
-document.getElementById("spinBtn").addEventListener("click", () => {
-  const deckName = document.getElementById("deckSelect").value;
-  const deck = data.decks[deckName];
-  if (!deck || deck.length === 0) return;
+function startGame(tpl) {
+    currentTemplate = tpl;
+    rerollCount = 0;
+    currentResults = {};
+    document.getElementById("template-image").src = tpl.image;
+    document.getElementById("template-name").textContent = tpl.name;
+    document.getElementById("roll-btn").classList.remove("hidden");
+    document.getElementById("reroll-btn").classList.add("hidden");
+    document.getElementById("results-body").innerHTML = "";
+    showSection("game");
+}
 
-  const item = deck[Math.floor(Math.random() * deck.length)];
+async function roll() {
+    const tbody = document.getElementById("results-body");
+    tbody.innerHTML = "";
+    const letters = Object.keys(currentTemplate.columns).sort();
 
-  const resultDiv = document.getElementById("result");
-  resultDiv.classList.add("hidden");
+    const promises = letters.map(letter => {
+        return new Promise(async resolve => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><strong>${letter}</strong></td>
+                <td>${currentTemplate.columns[letter].label}</td>
+                <td id="num-${letter}" class="number">0</td>
+                <td id="inst-${letter}"></td>
+            `;
+            tbody.appendChild(row);
 
-  setTimeout(() => {
-    document.getElementById("resultCode").textContent = item.code;
-    document.getElementById("resultText").textContent = item.text;
-    resultDiv.classList.remove("hidden");
+            // Animation roulette
+            let spins = 25;
+            const numCell = document.getElementById(`num-${letter}`);
+            for (let i = 0; i < spins; i++) {
+                numCell.textContent = Math.floor(Math.random() * 10);
+                await new Promise(r => setTimeout(r, 40 + i * 3));
+            }
+            const finalNum = Math.floor(Math.random() * 10);
+            numCell.textContent = finalNum;
+            currentResults[letter] = finalNum;
 
-    history.unshift({ code: item.code, text: item.text });
+            const instruction = currentTemplate.columns[letter].values[finalNum] || "—";
+            document.getElementById(`inst-${letter}`).textContent = instruction;
+            resolve();
+        });
+    });
+
+    await Promise.all(promises);
+    document.getElementById("roll-btn").classList.add("hidden");
+    document.getElementById("reroll-btn").classList.remove("hidden");
+    document.getElementById("reroll-count").textContent = "0";
+    saveToHistory();
+}
+
+function reroll() {
+    rerollCount++;
+    document.getElementById("reroll-count").textContent = rerollCount;
+    if (rerollCount >= 3) {
+        showToast("⚠️ Relancer trop souvent enlève le côté jeu du hasard !");
+    }
+    roll();
+}
+
+function saveToHistory() {
+    const entry = {
+        id: Date.now(),
+        templateId: currentTemplate.id,
+        name: currentTemplate.name,
+        date: new Date().toLocaleString("fr-FR"),
+        results: {...currentResults}
+    };
+    history.unshift(entry);
     if (history.length > 20) history.pop();
     localStorage.setItem("rouletteHistory", JSON.stringify(history));
     renderHistory();
-  }, 100);
-});
+}
 
-// Historique
 function renderHistory() {
-  const list = document.getElementById("historyList");
-  list.innerHTML = "";
-  history.forEach(e => {
-    const li = document.createElement("li");
-    li.innerHTML = `<span class="tag">${e.code}</span><span>${e.text}</span>`;
-    list.appendChild(li);
-  });
+    const container = document.getElementById("history-list");
+    container.innerHTML = "";
+    history.forEach(entry => {
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `
+            <div>
+                <strong>${entry.name}</strong><br>
+                <small>${entry.date}</small>
+            </div>
+            <div style="font-size:0.9rem; color:#ff2d55;">
+                ${Object.keys(entry.results).map(k => `${k}:${entry.results[k]}`).join(" • ")}
+            </div>
+        `;
+        div.onclick = () => showHistoryDetail(entry);
+        container.appendChild(div);
+    });
 }
 
-function clearHistory() {
-  history = [];
-  localStorage.removeItem("rouletteHistory");
-  renderHistory();
+function showHistoryDetail(entry) {
+    document.getElementById("modal-template").textContent = entry.name;
+    document.getElementById("modal-date").textContent = entry.date;
+    const tbody = document.getElementById("modal-body");
+    tbody.innerHTML = "";
+    Object.keys(entry.results).forEach(letter => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td><strong>${letter}</strong></td><td>—</td><td>${entry.results[letter]}</td><td>Historique</td>`;
+        tbody.appendChild(row);
+    });
+    document.getElementById("history-modal").classList.remove("hidden");
 }
 
-// Ajouter une règle
-async function addRule() {
-  const deck = document.getElementById("newDeck").value.trim();
-  const code = document.getElementById("newCode").value.trim();
-  const text = document.getElementById("newText").value.trim();
-  const msg = document.getElementById("adminMsg");
-
-  if (!deck || !code || !text) {
-    msg.textContent = "⚠️ Remplis tous les champs !";
-    msg.style.color = "#f87171";
-    return;
-  }
-
-  if (!data.decks[deck]) data.decks[deck] = [];
-  data.decks[deck].push({ code, text });
-
-  await fetch(BASE_URL, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Master-Key": API_KEY
-    },
-    body: JSON.stringify(data)
-  });
-
-  msg.textContent = `✅ Règle ${code} ajoutée dans "${deck}" !`;
-  msg.style.color = "#34d399";
-  populateDecks();
-
-  document.getElementById("newDeck").value = "";
-  document.getElementById("newCode").value = "";
-  document.getElementById("newText").value = "";
+function closeModal() {
+    document.getElementById("history-modal").classList.add("hidden");
 }
 
-// Init
-loadData();
-renderHistory();
-renderHistory();
+function showToast(msg) {
+    const toast = document.getElementById("toast");
+    toast.textContent = msg;
+    toast.classList.remove("hidden");
+    setTimeout(() => toast.classList.add("hidden"), 4000);
+}
 
-// =============================================
-// LANCER LA ROULETTE
-// =============================================
-function spin() {
-  const selectedDeck = decks[deckSelect.value];
-  const item = selectedDeck[Math.floor(Math.random() * selectedDeck.length)];
+function showSection(section) {
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.getElementById(section).classList.add("active");
+}
 
-  const resultDiv = document.getElementById('result');
-  resultDiv.classList.add('hidden');
+function backToHome() {
+    showSection("home");
+}
 
-  setTimeout(() => {
-    document.getElementById('resultCode').textContent = item.code;
-    document.getElementById('resultDesc').textContent = item.desc;
-    resultDiv.classList.remove('hidden');
-
-    // Ajouter à l'historique
-    history.unshift({ code: item.code, desc: item.desc, deck: deckSelect.value });
-    if (history.length > 20) history.pop();
-    localStorage.setItem('rouletteHistory', JSON.stringify(history));
+// INIT
+window.onload = () => {
+    loadTemplates();
     renderHistory();
-  }, 100);
-}
-
-// =============================================
-// HISTORIQUE
-// =============================================
-function renderHistory() {
-  const list = document.getElementById('historyList');
-  list.innerHTML = '';
-  history.forEach(entry => {
-    const li = document.createElement('li');
-    li.innerHTML = `<span class="code-tag">${entry.code}</span> <span>${entry.desc}</span>`;
-    list.appendChild(li);
-  });
-}
-
-function clearHistory() {
-  history = [];
-  localStorage.removeItem('rouletteHistory');
-  renderHistory();
-}
+};
