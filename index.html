@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ma Roulette</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 Ma Roulette</h1>
+
+    <!-- Sélecteur de deck -->
+    <div class="deck-selector">
+      <label for="deckSelect">Choisir un deck :</label>
+      <select id="deckSelect"></select>
+    </div>
+
+    <!-- Bouton lancer -->
+    <button id="spinBtn" onclick="spin()">🎰 Lancer la roulette</button>
+
+    <!-- Résultat -->
+    <div id="result" class="result hidden">
+      <div class="code" id="resultCode"></div>
+      <div class="description" id="resultDesc"></div>
+    </div>
+
+    <!-- Historique -->
+    <div class="history-section">
+      <h2>Historique</h2>
+      <ul id="historyList"></ul>
+      <button onclick="clearHistory()">🗑️ Effacer l'historique</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
