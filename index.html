@@ -1,46 +1,78 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MyRoulette</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyRoulette • Jeu Adulte</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <h1>🎲 MyRoulette</h1>
-    <p class="subtitle">Tire un code aléatoire et découvre ton action !</p>
+    <header>
+        <h1>My<span>Roulette</span></h1>
+        <nav>
+            <button onclick="showSection('home')">Accueil</button>
+            <button onclick="showSection('history')">Historique</button>
+        </nav>
+    </header>
 
-    <section class="panel">
-      <label for="deckSelect">Choisir un deck</label>
-      <select id="deckSelect"><option>Chargement...</option></select>
-
-      <button id="spinBtn">🎰 Lancer</button>
-
-      <div id="result" class="result hidden">
-        <div id="resultCode" class="code"></div>
-        <div id="resultText" class="text"></div>
-      </div>
+    <!-- ACCUEIL -->
+    <section id="home" class="section active">
+        <h2>Choisis ton template</h2>
+        <div id="templates-grid" class="grid"></div>
     </section>
 
-    <!-- Historique -->
-    <section class="panel" style="margin-top:16px">
-      <h2>📋 Historique</h2>
-      <ul id="historyList"></ul>
-      <button onclick="clearHistory()" class="btn-secondary">🗑️ Effacer</button>
+    <!-- JEU -->
+    <section id="game" class="section">
+        <button class="back-btn" onclick="backToHome()">← Retour</button>
+        <div class="game-header">
+            <img id="template-image" alt="Template">
+            <h2 id="template-name"></h2>
+        </div>
+        
+        <div class="roll-area">
+            <button id="roll-btn" class="roll-button" onclick="roll()">LANCER LA ROULETTE</button>
+            <button id="reroll-btn" class="reroll-button hidden" onclick="reroll()">Relancer (<span id="reroll-count">0</span>)</button>
+        </div>
+
+        <div id="results-container" class="results">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Lettre</th>
+                        <th>Catégorie</th>
+                        <th>Chiffre</th>
+                        <th>Instruction</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+        </div>
     </section>
 
-    <!-- Admin : ajouter une règle -->
-    <section class="panel admin" style="margin-top:16px">
-      <h2>➕ Ajouter une règle</h2>
-      <input id="newDeck" type="text" placeholder="Nom du deck (ex: Deck 1)" />
-      <input id="newCode" type="text" placeholder="Code (ex: A1)" />
-      <input id="newText" type="text" placeholder="Description de l'action" />
-      <button onclick="addRule()">Ajouter</button>
-      <p id="adminMsg"></p>
+    <!-- HISTORIQUE -->
+    <section id="history" class="section">
+        <h2>Historique des tirages</h2>
+        <div id="history-list" class="history-list"></div>
     </section>
-  </main>
 
-  <script src="script.js"></script>
+    <!-- MODAL DÉTAIL HISTORIQUE -->
+    <div id="history-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeModal()">×</button>
+            <h3 id="modal-template"></h3>
+            <p id="modal-date"></p>
+            <table id="modal-table">
+                <thead>
+                    <tr><th>Lettre</th><th>Catégorie</th><th>Chiffre</th><th>Instruction</th></tr>
+                </thead>
+                <tbody id="modal-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="script.js"></script>
 </body>
 </html>
