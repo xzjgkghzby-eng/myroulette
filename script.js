@@ -1,4 +1,4 @@
-const BIN_URL = "https://api.jsonbin.io/v3/b/69ba8242aa77b81da9f61d90/latest";
+const BIN_URL = "https://api.jsonbin.io/v3/b/69ba93d4b7ec241ddc7c90ae/latest";
 const MASTER_KEY = "$2a$10$4i14QEY44PwUIvj7C/oI6uAGx6IQpWoihAcpGKxP8IVWqgON0xVEy";
 
 let templates = [];
