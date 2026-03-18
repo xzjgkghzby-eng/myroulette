@@ -2,36 +2,44 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Ma Roulette</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyRoulette</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>🎲 Ma Roulette</h1>
+  <main class="app">
+    <h1>🎲 MyRoulette</h1>
+    <p class="subtitle">Tire un code aléatoire et découvre ton action !</p>
 
-    <!-- Sélecteur de deck -->
-    <div class="deck-selector">
-      <label for="deckSelect">Choisir un deck :</label>
-      <select id="deckSelect"></select>
-    </div>
+    <section class="panel">
+      <label for="deckSelect">Choisir un deck</label>
+      <select id="deckSelect"><option>Chargement...</option></select>
 
-    <!-- Bouton lancer -->
-    <button id="spinBtn" onclick="spin()">🎰 Lancer la roulette</button>
+      <button id="spinBtn">🎰 Lancer</button>
 
-    <!-- Résultat -->
-    <div id="result" class="result hidden">
-      <div class="code" id="resultCode"></div>
-      <div class="description" id="resultDesc"></div>
-    </div>
+      <div id="result" class="result hidden">
+        <div id="resultCode" class="code"></div>
+        <div id="resultText" class="text"></div>
+      </div>
+    </section>
 
     <!-- Historique -->
-    <div class="history-section">
-      <h2>Historique</h2>
+    <section class="panel" style="margin-top:16px">
+      <h2>📋 Historique</h2>
       <ul id="historyList"></ul>
-      <button onclick="clearHistory()">🗑️ Effacer l'historique</button>
-    </div>
-  </div>
+      <button onclick="clearHistory()" class="btn-secondary">🗑️ Effacer</button>
+    </section>
+
+    <!-- Admin : ajouter une règle -->
+    <section class="panel admin" style="margin-top:16px">
+      <h2>➕ Ajouter une règle</h2>
+      <input id="newDeck" type="text" placeholder="Nom du deck (ex: Deck 1)" />
+      <input id="newCode" type="text" placeholder="Code (ex: A1)" />
+      <input id="newText" type="text" placeholder="Description de l'action" />
+      <button onclick="addRule()">Ajouter</button>
+      <p id="adminMsg"></p>
+    </section>
+  </main>
 
   <script src="script.js"></script>
 </body>
