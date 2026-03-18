@@ -1,5 +1,5 @@
 const BIN_URL = "https://api.jsonbin.io/v3/b/69ba93d4b7ec241ddc7c90ae/latest";
-const MASTER_KEY = "$2a$10$4i14QEY44PwUIvj7C/oI6uAGx6IQpWoihAcpGKxP8IVWqgON0xVEy";
+const MASTER_KEY = "$2a$10$NXvenv3xgQeZaFPuGFmMYOAGlYLBDTpG/1miAvRRc3Bq//Xun3Fme";
 
 let templates = [];
 let currentTemplate = null;
